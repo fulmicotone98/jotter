@@ -1,0 +1,8 @@
+[package]
+name = "jotter"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+termios = "0.3"
+libc = "0.2"
