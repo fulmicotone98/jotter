@@ -25,9 +25,32 @@ fn enable_raw_mode() -> io::Result<()> {
         *original_mode = Some(original_mode_ios.to_owned());
     }
 
-    /* Flipping the ECHO bit to 0 to disable echo inside the terminal.
-     * Then flush the new termios struct. */
-    termios.c_lflag &= !(ECHO);
+    /* Flipping bits to 0:
+     * - ECHO: turns off echo mode
+     * - ICANON: turns off canonical mode (turning it off allows to read byte by
+     *   byte the input intead of line by line)
+     * - ISIG: turns off Ctrl-C and Ctrl-Z signals
+     * - IXON: turns off Ctrl-S and Ctrl-Q signals of 'software control flow'
+     * - IEXTEN: turns off Ctrl-V on some systems; the terminal waits for you
+     *   type another character and then sends it literally
+     * - ICRNL: (CR: Carriage Return, NL: New Line) turns off Ctrl-M; it will be
+     *   read now as carriage return (13) like ENTER key
+     * - OPOST: turns off the automatic translation of each '\n' into '\r\n'
+     *   (carriage return + new line)
+     * The following won´t have observable effect (or they don´t apply to modern
+     * terminals), but are usually turned of by when switching to RAW_MODE
+     * - BRKINT:
+     * - INPCK: turns off parity checking (for old terminals)
+     * - ISTRIP: turns off the stripping of each 8th bit of the input byte
+     * - CS8: it is a bit mask and it sets the Character Size (CS) to 8 bits
+     */
+
+    termios.c_cflag |= !(CS8);
+    termios.c_oflag &= !(OPOST);
+    termios.c_iflag &= !(IXON | ICRNL | BRKINT | INPCK | ISTRIP);
+    termios.c_lflag &= !(ECHO | ICANON | ISIG | IEXTEN);
+
+    /* Then flush the new termios struct. */
     tcsetattr(fd, TCSAFLUSH, &termios).unwrap();
 
     Ok(())
@@ -55,11 +78,18 @@ fn disable_raw_mode() -> io::Result<()> {
 fn main() {
     enable_raw_mode().unwrap();
     for b in io::stdin().bytes() {
-        let c = b.unwrap() as char;
-        println!("{}", c);
+        let b = b.unwrap();
+        let c = b as char;
+
+        /* Check if c is a control character */
+        if c.is_control() {
+            println!("Binary: {0:08b} ASCII: {0:#03}\r\n", b);
+        } else {
+            println!("Binary: {0:08b} ASCII: {0:#03} Character: {1:#?}\r\n", b, c);
+        }
         if c == 'q' {
+            disable_raw_mode().unwrap();
             break;
         }
     }
-    disable_raw_mode().unwrap();
 }
