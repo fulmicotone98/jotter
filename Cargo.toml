@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 termios = "0.3"
 libc = "0.2"
+
+[[bin]]
+name = "jotter"
+path = "src/main.rs"
