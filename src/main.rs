@@ -2,13 +2,18 @@ use std::process::ExitCode;
 
 use crate::editor::Editor;
 
+mod document;
 mod editor;
 mod error;
-mod events;
+mod event;
+mod filetype;
+mod row;
 mod sys;
 
+pub const JOTTER_VERSION: &str = "0.1.0";
+
 fn main() -> ExitCode {
-    let editor = match Editor::new() {
+    let mut editor = match Editor::default() {
         Ok(editor) => editor,
         Err(e) => {
             eprintln!("ERROR: {e}\r");
