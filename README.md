@@ -19,9 +19,12 @@ Early stage. Currently implemented:
 
 - Raw mode (entered on startup, restored on exit)
 - Non-blocking keypress reading
+- Screen rendering of chars
+- Cursor movement with arrow keys
+- New line
 
-Not yet implemented: screen rendering, cursor movement, opening/editing files,
-search, syntax highlighting.
+Not yet implemented: delete characters, opening/editing files (save missing), status bar, search,
+syntax highlighting.
 
 See [CHANGELOG.md](./CHANGELOG.md) for the detailed history and
 [NOTES.md](./NOTES.md) for design decisions and the current roadmap.
@@ -32,7 +35,9 @@ Requires a recent Rust toolchain (edition 2024 features are used).
 
 ```sh
 cargo build
-cargo run
+cargo run # to open a new empty file
+
+cargo run -- file # to open an existing file 
 ```
 
 ## License

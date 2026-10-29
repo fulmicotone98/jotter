@@ -27,7 +27,20 @@ what's coming next, see [NOTES.md](./NOTES.md).
   an `Editor` value only on success, tying raw mode's lifetime to the
   value's lifetime.
 - `Editor` now implements `Drop`, restoring the terminal automatically when
-  the value goes out of scope — including during a panic unwind, not just
+  the value goes out of scope — including during a panic unwind.
+- Cursor reposition on startup and clear screen on quit through `esc` sequences.
+- Get the `WindowSize` from the terminal through `ioctl` call.
+- Implement a start screen scenario in which `~` are written on the 1st row, as
+  many as the number of rows of the `WindowSize`. 
+- Welcome message centered to the `WindowSize` of the terminal.
+- Cursor movement with arrow keys, avoiding moving off screen. Right at the end of
+  a row moves to the start of the next one.
+- Typed printable characters are appended to the row under the cursor (a new row is
+  created past the end of the document). Inserting in the middle of a row is not
+  supported yet.
+- File viewer: `jotter <file>` opens a text file (`Document`, `Row` and `FileType`
+  types; rows split on `\n`/`\r\n`; tabs drawn as a single space), shows `~` on the
+  rows past its end, and scrolls vertically through an `offset`.
 
 
 ### Fixed
@@ -52,6 +65,7 @@ what's coming next, see [NOTES.md](./NOTES.md).
 - Terminal could be left raw if `Editor::run()` panicked (rather than
   returning `Err`), since nothing would run `disable_raw_mode()` on that
   path. Fixed by `Editor`'s `Drop` impl.
+- Welcome message's padding underflow with small terminal is now fixed.
 
 
 
@@ -62,5 +76,11 @@ what's coming next, see [NOTES.md](./NOTES.md).
 - `main()` now returns `std::process::ExitCode` instead of calling
   `std::process::exit()` directly, since `exit()` skips destructors and would
   have bypassed `Editor`'s new `Drop`-based cleanup on failure paths.
-
+- `poll_event()` now gets bytes in chunks of 3, since some keys (like arrow key)
+  contains the escape plus 2 bytes (es. Up: `\x1b` + `[` + `A`).
+- New `Event::parse_event()` to parse events when the system polls new events,
+  instead of using `KeyCode::from_bytes()`.
+- `RawModeError` is now part of `JotterError::RM(RawModeError)`.
+- A stdin that reports end-of-file now yields `UnexpectedEof` with a message
+  instead of an empty `InvalidInput`.
 
